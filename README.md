@@ -27,7 +27,7 @@ Windows PowerShell:
 iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/install.ps1 -UseB | iex
 ```
 
-当前仓库本地安装:
+源码安装:
 
 ```bash
 python3 -m pip install -e .
@@ -115,7 +115,7 @@ Windows:
 iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/upgrade.ps1 -UseB | iex
 ```
 
-发布到 PyPI 前，可以通过环境变量指定 GitHub 或本地包来源：
+指定 GitHub 包来源：
 
 ```bash
 MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git" scripts/install.sh
@@ -127,10 +127,9 @@ memos upgrade --source "git+https://github.com/a574676848/memos-cli.git"
 - [安装与升级](docs/installation.md)
 - [授权与配置](docs/authentication.md)
 - [命令参考](docs/cli-reference.md)
-- [发布到 GitHub](docs/github-release.md)
+- [运维说明](docs/operations.md)
+- [发布与安装入口](docs/release.md)
 - [文档中心](docs/README.md)
-
-历史需求、设计和实施材料保留在 `docs/01-*` 到 `docs/05-*`，用于理解项目背景，不作为用户优先入口。
 
 ## 开发
 
