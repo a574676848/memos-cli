@@ -19,7 +19,7 @@ git commit -m "Initial open source release"
 ## 使用 GitHub CLI 创建远端仓库
 
 ```bash
-gh repo create <owner>/memos-cli \
+gh repo create a574676848/memos-cli \
   --public \
   --source . \
   --remote origin \
@@ -29,31 +29,20 @@ gh repo create <owner>/memos-cli \
 如果仓库已在 GitHub Web 创建：
 
 ```bash
-git remote add origin git@github.com:<owner>/memos-cli.git
+git remote add origin git@github.com:a574676848/memos-cli.git
 git branch -M main
 git push -u origin main
 ```
 
-## 替换文档中的占位符
+## 验证安装地址
 
-README 和安装文档使用 `<owner>` 作为 GitHub owner 占位符。创建远端仓库后替换为真实 owner：
-
-```bash
-python3 - <<'PY'
-from pathlib import Path
-for path in [Path("README.md"), Path("docs/installation.md"), Path("docs/cli-reference.md")]:
-    text = path.read_text()
-    path.write_text(text.replace("<owner>", "your-github-owner"))
-PY
-```
-
-替换后验证安装命令指向真实地址：
+README 和安装文档已使用 GitHub owner `a574676848`。推送前确认文档中的安装地址都指向真实仓库：
 
 ```bash
-rg '<owner>' README.md docs
+rg 'github.com/a574676848/memos-cli|raw.githubusercontent.com/a574676848/memos-cli' README.md docs
 ```
 
-没有输出表示占位符已清理。
+如果后续迁移仓库 owner，需要同步替换这些地址。
 
 ## 发布前检查
 
@@ -69,15 +58,23 @@ python3 -m memos_cli -j upgrade --manager pip --source . --dry-run
 脚本默认安装 `memos-cli` 包名，适合发布到 PyPI 后使用。发布到 PyPI 前，可以使用 GitHub 仓库作为包来源：
 
 ```bash
-MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/<owner>/memos-cli.git" scripts/install.sh
+MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git" scripts/install.sh
 ```
 
 Windows:
 
 ```powershell
-$env:MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/<owner>/memos-cli.git"
+$env:MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git"
 .\scripts\install.ps1
 ```
+
+README 中的一键安装命令本质上依赖 GitHub raw 文件地址：
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/install.sh)"
+```
+
+只要 `scripts/install.sh` 已推送到公开仓库的 `main` 分支，这个命令就可以直接使用。脚本内容变更后，用户再次执行同一个命令会拿到最新脚本，并按脚本内的幂等逻辑安装或升级。
 
 ## GitHub 社区文件
 

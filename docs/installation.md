@@ -11,8 +11,10 @@
 ## Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/memos-cli/main/scripts/install.sh | sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/install.sh)"
 ```
+
+这个命令的工作方式是：`curl` 从 GitHub raw 地址下载 `scripts/install.sh`，`/bin/bash -c` 在本机执行脚本。脚本内部负责检测 `pipx`、Python、已有 `memos` 命令，并决定安装或升级。
 
 本地仓库安装：
 
@@ -24,7 +26,7 @@ MEMOS_CLI_PACKAGE_SPEC=. scripts/install.sh
 ## Windows PowerShell
 
 ```powershell
-iwr https://raw.githubusercontent.com/<owner>/memos-cli/main/scripts/install.ps1 -UseB | iex
+iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/install.ps1 -UseB | iex
 ```
 
 本地仓库安装：
@@ -65,7 +67,7 @@ memos upgrade
 指定来源升级：
 
 ```bash
-memos upgrade --source "git+https://github.com/<owner>/memos-cli.git"
+memos upgrade --source "git+https://github.com/a574676848/memos-cli.git"
 ```
 
 只打印将要执行的命令：
@@ -77,7 +79,7 @@ memos -j upgrade --dry-run
 脚本形式：
 
 ```bash
-scripts/upgrade.sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/upgrade.sh)"
 ```
 
 Windows:

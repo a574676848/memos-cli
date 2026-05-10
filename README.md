@@ -18,13 +18,13 @@
 Linux / macOS:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/memos-cli/main/scripts/install.sh | sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/install.sh)"
 ```
 
 Windows PowerShell:
 
 ```powershell
-iwr https://raw.githubusercontent.com/<owner>/memos-cli/main/scripts/install.ps1 -UseB | iex
+iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/install.ps1 -UseB | iex
 ```
 
 当前仓库本地安装:
@@ -106,20 +106,20 @@ memos upgrade
 脚本升级：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/memos-cli/main/scripts/upgrade.sh | sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/upgrade.sh)"
 ```
 
 Windows:
 
 ```powershell
-iwr https://raw.githubusercontent.com/<owner>/memos-cli/main/scripts/upgrade.ps1 -UseB | iex
+iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/upgrade.ps1 -UseB | iex
 ```
 
 发布到 PyPI 前，可以通过环境变量指定 GitHub 或本地包来源：
 
 ```bash
-MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/<owner>/memos-cli.git" scripts/install.sh
-memos upgrade --source "git+https://github.com/<owner>/memos-cli.git"
+MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git" scripts/install.sh
+memos upgrade --source "git+https://github.com/a574676848/memos-cli.git"
 ```
 
 ## 文档
