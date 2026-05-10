@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memos-cli"
+version = "0.1.0"
+description = "Production-oriented CLI for Memos v0.28 REST API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "memos-cli maintainers"}]
+dependencies = []
+
+[project.scripts]
+memos = "memos_cli.app:main"
+
+[tool.setuptools]
+packages = ["memos_cli"]
+
