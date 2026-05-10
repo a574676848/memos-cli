@@ -83,6 +83,15 @@ memos share revoke memos/memo123/shares/share456 --force
 memos share get share-token
 ```
 
+`memos share create` 会在返回结果中额外包含 `shareUrl` 字段，按当前激活 context 的 `server`
+配置自动拼接成可直接打开的分享链接，例如：
+
+```text
+http://your-memos-host/memos/shares/<token>
+```
+
+不会写死域名。
+
 ## 用户与自动化资源
 
 ```bash

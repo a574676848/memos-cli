@@ -64,6 +64,7 @@ def flatten(value: Any) -> str:
 def select_columns(rows: list[dict[str, Any]]) -> list[str]:
     preferred = [
         "name",
+        "shareUrl",
         "content",
         "snippet",
         "visibility",

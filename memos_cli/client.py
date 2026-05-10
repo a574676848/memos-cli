@@ -67,6 +67,10 @@ class MemosClient:
             body["memo"] = normalize_resource_name(memo, "memos")
         return self.request("POST", "/api/v1/attachments", body=body)
 
+    def share_url(self, share_name: str) -> str:
+        token = share_name.strip().rstrip("/").split("/")[-1]
+        return f"{self.server}/memos/shares/{token}"
+
     def _url(self, path: str, params: dict[str, Any] | None = None) -> str:
         if path.startswith("http://") or path.startswith("https://"):
             base = path

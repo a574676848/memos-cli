@@ -584,7 +584,12 @@ def cmd_share_create(args) -> Any:
         body["expireTime"] = args.expire_at
     elif args.expire_in_days:
         body["expireTime"] = (datetime.now(timezone.utc) + timedelta(days=args.expire_in_days)).isoformat().replace("+00:00", "Z")
-    return client_from_args(args).request("POST", f"/api/v1/{normalize_resource_name(args.memo, 'memos')}/shares", body=body)
+    client = client_from_args(args)
+    result = client.request("POST", f"/api/v1/{normalize_resource_name(args.memo, 'memos')}/shares", body=body)
+    if isinstance(result, dict) and result.get("name"):
+        result = dict(result)
+        result["shareUrl"] = client.share_url(result["name"])
+    return result
 
 
 def cmd_user_create(args) -> Any:

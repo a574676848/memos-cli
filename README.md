@@ -8,7 +8,7 @@
 ## 核心能力
 
 - 管理 memo：创建、列表、查看、更新、删除、搜索、编辑。
-- 管理附件与分享：上传附件、关联 memo、创建和撤销分享链接。
+- 管理附件与分享：上传附件、关联 memo、创建和撤销分享链接；创建分享时自动输出基于当前配置服务地址的可访问链接。
 - 管理用户侧资源：用户、Personal Access Token、Webhook、Shortcut。
 - 提供 `memos api METHOD PATH` 原始 API 入口，覆盖尚未封装成一等命令的 Memos REST 端点。
 - 无第三方运行时依赖，支持 Linux、macOS 和 Windows。
