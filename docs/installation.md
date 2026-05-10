@@ -6,7 +6,7 @@
 
 - Python `3.11+`
 - 推荐安装 `pipx`，用于隔离 CLI 运行环境
-- 没有 `pipx` 时，脚本会回退到 `python -m pip install --user --upgrade`
+- 没有 `pipx` 时，脚本会自动使用 `~/.local/share/memos-cli/venv`
 
 ## Linux / macOS
 
@@ -44,16 +44,18 @@ $env:MEMOS_CLI_PACKAGE_SPEC="."
 - 如果系统中没有 `memos` 命令，执行安装。
 - 如果系统中已经存在 `memos` 命令，执行升级或强制重装。
 - 默认优先使用 `pipx`。
-- 没有 `pipx` 时使用 `pip --user --upgrade`。
+- 没有 `pipx` 时使用独立 venv，并把 `memos` 链接到 `~/.local/bin`。
 
 可用环境变量：
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `MEMOS_CLI_PACKAGE_SPEC` | `memos-cli` | pip / pipx 可识别的包来源，可设为 PyPI 包名、Git URL 或本地路径 |
+| `MEMOS_CLI_PACKAGE_SPEC` | `git+https://github.com/a574676848/memos-cli.git` | pip / pipx 可识别的包来源，可设为 PyPI 包名、Git URL 或本地路径 |
 | `MEMOS_CLI_PACKAGE_NAME` | `memos-cli` | pipx 升级时使用的包名 |
 | `MEMOS_CLI_COMMAND_NAME` | `memos` | CLI 命令名 |
-| `MEMOS_CLI_INSTALL_MANAGER` | `auto` | 可选 `auto`、`pipx`、`pip` |
+| `MEMOS_CLI_INSTALL_MANAGER` | `auto` | 可选 `auto`、`pipx`、`pip`、`venv` |
+| `MEMOS_CLI_VENV_DIR` | `~/.local/share/memos-cli/venv` | venv 模式的安装目录 |
+| `MEMOS_CLI_BIN_DIR` | `~/.local/bin` | venv 模式的命令链接目录 |
 | `PYTHON` | `python3` 或 `python` | pip 模式使用的 Python |
 
 ## 独立升级命令

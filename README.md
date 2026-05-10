@@ -34,7 +34,7 @@ python3 -m pip install -e .
 memos --version
 ```
 
-安装脚本可重复执行。检测到已有 `memos` 命令时会执行升级路径；未安装时会优先使用 `pipx`，没有 `pipx` 时回退到 `pip --user --upgrade`。
+安装脚本可重复执行。检测到已有 `memos` 命令时会执行升级路径；未安装时会优先使用 `pipx`，没有 `pipx` 时使用独立 venv。
 
 ## 授权与配置
 
