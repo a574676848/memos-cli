@@ -30,7 +30,8 @@ contexts:
             path = Path(td) / "config.yaml"
             save_config(Config(contexts={"default": Context("http://x", "tok", "root")}), path)
             mode = stat.S_IMODE(path.stat().st_mode)
-            self.assertEqual(mode, 0o600)
+            if os.name != "nt":
+                self.assertEqual(mode, 0o600)
             cfg, loaded_path = load_config(str(path))
             self.assertEqual(loaded_path, path)
             self.assertEqual(cfg.contexts["default"].token, "tok")

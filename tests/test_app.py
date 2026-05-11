@@ -107,6 +107,12 @@ class AppTests(unittest.TestCase):
         self.assertEqual(payload["command"][-2:], ["--upgrade", "."])
         self.assertTrue(payload["dry_run"])
 
+    def test_upgrade_default_source_uses_github(self):
+        code, stdout, _ = run_cli(["-j", "upgrade", "--manager", "pip", "--dry-run"])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout)
+        self.assertEqual(payload["command"][-1], "git+https://github.com/a574676848/memos-cli.git")
+
 
 if __name__ == "__main__":
     unittest.main()
