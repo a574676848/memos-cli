@@ -18,6 +18,10 @@ from .errors import APIError, ArgumentError, ConfigError, MemosCLIError
 from .render import render
 
 
+DEFAULT_PACKAGE_SPEC = "git+https://github.com/a574676848/memos-cli.git"
+DEFAULT_PACKAGE_NAME = "memos-cli"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -408,13 +412,13 @@ def add_upgrade(sub: argparse._SubParsersAction) -> None:
     upgrade = sub.add_parser("upgrade", help="upgrade memos-cli")
     upgrade.add_argument(
         "--source",
-        default=os.environ.get("MEMOS_CLI_PACKAGE_SPEC") or os.environ.get("MEMOS_CLI_UPGRADE_SOURCE") or "memos-cli",
-        help="pip/pipx package spec, defaults to MEMOS_CLI_PACKAGE_SPEC or memos-cli",
+        default=os.environ.get("MEMOS_CLI_PACKAGE_SPEC") or os.environ.get("MEMOS_CLI_UPGRADE_SOURCE") or DEFAULT_PACKAGE_SPEC,
+        help=f"pip/pipx package spec, defaults to MEMOS_CLI_PACKAGE_SPEC or {DEFAULT_PACKAGE_SPEC}",
     )
     upgrade.add_argument(
         "--package-name",
-        default=os.environ.get("MEMOS_CLI_PACKAGE_NAME", "memos-cli"),
-        help="installed package name used by pipx, defaults to memos-cli",
+        default=os.environ.get("MEMOS_CLI_PACKAGE_NAME", DEFAULT_PACKAGE_NAME),
+        help=f"installed package name used by pipx, defaults to {DEFAULT_PACKAGE_NAME}",
     )
     upgrade.add_argument("--manager", choices=["auto", "pipx", "pip"], default=os.environ.get("MEMOS_CLI_UPGRADE_MANAGER", "auto"))
     upgrade.add_argument("--python", default=sys.executable, help="Python executable used for pip upgrades")

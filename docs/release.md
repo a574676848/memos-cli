@@ -44,22 +44,30 @@ memos upgrade
 
 ```bash
 python3 -m unittest discover -s tests
-python3 -m py_compile memos_cli/*.py
+python3 -m compileall -q memos_cli
 python3 -m memos_cli --version
 python3 -m memos_cli -j upgrade --manager pip --source . --dry-run
 ```
 
 ## 包来源
 
-默认包来源为 `memos-cli`。需要从 GitHub 安装时使用：
+默认包来源为本仓库 GitHub 源码：
 
-```bash
-MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git" scripts/install.sh
+```text
+git+https://github.com/a574676848/memos-cli.git
 ```
 
-Windows:
+一键安装脚本和 `memos upgrade` 都使用这个默认来源，确保跨平台安装到当前仓库产物，而不是 PyPI 上旧版同名包。
+
+需要改用其他来源时，显式覆盖 `MEMOS_CLI_PACKAGE_SPEC`：
+
+```bash
+MEMOS_CLI_PACKAGE_SPEC="." scripts/install.sh
+```
+
+Windows PowerShell:
 
 ```powershell
-$env:MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git"
+$env:MEMOS_CLI_PACKAGE_SPEC="."
 .\scripts\install.ps1
 ```

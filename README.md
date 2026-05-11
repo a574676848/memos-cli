@@ -35,6 +35,7 @@ memos --version
 ```
 
 安装脚本可重复执行。检测到已有 `memos` 命令时会执行升级路径；未安装时会优先使用 `pipx`，没有 `pipx` 时使用独立 venv。
+默认包来源为本仓库 GitHub 源码，避免 Windows 环境误装到 PyPI 上旧版同名包。
 
 ## 授权与配置
 
@@ -115,11 +116,11 @@ Windows:
 iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/upgrade.ps1 -UseB | iex
 ```
 
-指定 GitHub 包来源：
+默认升级来源同样是本仓库 GitHub 源码；需要临时改用其他来源时，可显式指定：
 
 ```bash
-MEMOS_CLI_PACKAGE_SPEC="git+https://github.com/a574676848/memos-cli.git" scripts/install.sh
-memos upgrade --source "git+https://github.com/a574676848/memos-cli.git"
+MEMOS_CLI_PACKAGE_SPEC="." scripts/install.sh
+memos upgrade --source "."
 ```
 
 ## 文档
@@ -135,7 +136,7 @@ memos upgrade --source "git+https://github.com/a574676848/memos-cli.git"
 
 ```bash
 python3 -m unittest discover -s tests
-python3 -m py_compile memos_cli/*.py
+python3 -m compileall -q memos_cli
 ```
 
 本地 smoke test:
