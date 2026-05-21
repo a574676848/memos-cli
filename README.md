@@ -104,6 +104,12 @@ memos -o memos.json -j memo list --limit 100
 memos upgrade
 ```
 
+只检查 GitHub 源码中的最新版本，不执行升级：
+
+```bash
+memos upgrade --check
+```
+
 脚本升级：
 
 ```bash
@@ -122,6 +128,8 @@ iwr https://raw.githubusercontent.com/a574676848/memos-cli/main/scripts/upgrade.
 MEMOS_CLI_PACKAGE_SPEC="." scripts/install.sh
 memos upgrade --source "."
 ```
+
+版本号以安装包元数据为准，CLI 运行时通过 Python package metadata 读取当前版本；`memos upgrade --check` 会读取 GitHub `main` 分支上的 `pyproject.toml`，比对其中的 `[project].version`。
 
 ## 文档
 

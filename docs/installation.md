@@ -76,6 +76,14 @@ memos upgrade
 
 `memos upgrade` 默认从本仓库 GitHub 源码升级。需要改用本地目录、私有 fork 或 PyPI 包时，使用 `--source` 显式指定。
 
+只检查 GitHub 源码中的最新版本，不执行升级：
+
+```bash
+memos upgrade --check
+```
+
+版本号以安装包元数据为唯一来源。CLI 运行时通过 Python package metadata 读取当前版本；检查更新时读取 GitHub `main` 分支上的 `pyproject.toml`，比对 `[project].version`。
+
 指定来源升级：
 
 ```bash

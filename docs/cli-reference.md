@@ -136,6 +136,7 @@ memos api GET /api/v1/memos --param pageSize=10 --param filter='content.contains
 
 ```bash
 memos upgrade
+memos upgrade --check
 memos upgrade --source "."
 memos -j upgrade --dry-run
 ```

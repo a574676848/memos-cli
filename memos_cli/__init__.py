@@ -1,4 +1,7 @@
 """Memos CLI package."""
 
-__version__ = "0.1.3"
+from .version import get_current_version
+
+
+__version__ = get_current_version()
 
