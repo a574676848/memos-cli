@@ -8,6 +8,7 @@ INSTALL_MANAGER="${MEMOS_CLI_INSTALL_MANAGER:-auto}"
 PYTHON_BIN="${PYTHON:-python3}"
 VENV_DIR="${MEMOS_CLI_VENV_DIR:-$HOME/.local/share/memos-cli/venv}"
 BIN_DIR="${MEMOS_CLI_BIN_DIR:-$HOME/.local/bin}"
+INSTALLED_COMMAND=""
 
 info() {
   printf '%s\n' "$*"
@@ -34,11 +35,13 @@ install_with_pipx() {
     info "Installing memos-cli with pipx..."
     pipx install "$PACKAGE_SPEC"
   fi
+  INSTALLED_COMMAND="$(command -v "$COMMAND_NAME" 2>/dev/null || true)"
 }
 
 install_with_pip_user() {
   info "Installing or upgrading memos-cli with pip --user..."
   "$PYTHON_BIN" -m pip install --user --upgrade "$PACKAGE_SPEC"
+  INSTALLED_COMMAND="$(command -v "$COMMAND_NAME" 2>/dev/null || true)"
 }
 
 install_with_venv() {
@@ -48,6 +51,7 @@ install_with_venv() {
   "$VENV_DIR/bin/python" -m pip install --upgrade "$PACKAGE_SPEC"
   mkdir -p "$BIN_DIR"
   ln -sfn "$VENV_DIR/bin/$COMMAND_NAME" "$BIN_DIR/$COMMAND_NAME"
+  INSTALLED_COMMAND="$BIN_DIR/$COMMAND_NAME"
 }
 
 if [ "$INSTALL_MANAGER" = "pipx" ]; then
@@ -68,10 +72,10 @@ else
   fi
 fi
 
-if has_cmd "$COMMAND_NAME"; then
+if [ -n "$INSTALLED_COMMAND" ] && [ -x "$INSTALLED_COMMAND" ]; then
+  "$INSTALLED_COMMAND" --version
+elif has_cmd "$COMMAND_NAME"; then
   "$COMMAND_NAME" --version
-elif [ -x "$BIN_DIR/$COMMAND_NAME" ]; then
-  "$BIN_DIR/$COMMAND_NAME" --version
 else
   info "Installed package, but '$COMMAND_NAME' is not on PATH yet."
   info "Add '$BIN_DIR' to PATH, then run: $COMMAND_NAME --version"

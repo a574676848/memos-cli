@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from . import __version__
-from .client import MemosClient, api_resource_path, maybe_json, normalize_resource_name, parse_kv
+from .client import MemosClient, api_resource_path, normalize_resource_name
 from .config import Config, Context, active_context, load_config, safe_config_dict, save_config
 from .errors import APIError, ArgumentError, ConfigError, MemosCLIError
+from .raw_api import add_api
 from .render import render
+from .upgrade import add_upgrade
+from .version import get_current_version
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -38,7 +38,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="memos", description="CLI for Memos v0.28 REST API")
-    parser.add_argument("--version", action="version", version=f"memos-cli {__version__}")
+    parser.add_argument("--version", action="version", version=f"memos-cli {get_current_version()}")
     parser.add_argument("-c", "--config", help="config file path")
     parser.add_argument("--context", help="config context name")
     parser.add_argument("-f", "--format", choices=["table", "json", "plain", "csv"], default=os.environ.get("MEMOS_FORMAT", "table"))
@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_webhook(sub)
     add_shortcut_resource(sub)
     add_upgrade(sub)
-    add_api(sub)
+    add_api(sub, client_from_args)
     return parser
 
 
@@ -394,35 +394,6 @@ def add_shortcut_resource(sub: argparse._SubParsersAction) -> None:
     delete.set_defaults(func=lambda args: delete_with_confirm(args, api_resource_path(args.name, "users"), args.force))
 
 
-def add_api(sub: argparse._SubParsersAction) -> None:
-    api = sub.add_parser("api", help="raw API escape hatch")
-    api.add_argument("method", choices=["GET", "POST", "PATCH", "DELETE", "PUT", "get", "post", "patch", "delete", "put"])
-    api.add_argument("path")
-    api.add_argument("--data", help="JSON request body")
-    api.add_argument("--data-file", help="read JSON body from file, '-' for stdin")
-    api.add_argument("--param", action="append", help="query parameter KEY=VALUE")
-    api.set_defaults(func=cmd_api)
-
-
-def add_upgrade(sub: argparse._SubParsersAction) -> None:
-    upgrade = sub.add_parser("upgrade", help="upgrade memos-cli")
-    upgrade.add_argument(
-        "--source",
-        default=os.environ.get("MEMOS_CLI_PACKAGE_SPEC") or os.environ.get("MEMOS_CLI_UPGRADE_SOURCE") or "memos-cli",
-        help="pip/pipx package spec, defaults to MEMOS_CLI_PACKAGE_SPEC or memos-cli",
-    )
-    upgrade.add_argument(
-        "--package-name",
-        default=os.environ.get("MEMOS_CLI_PACKAGE_NAME", "memos-cli"),
-        help="installed package name used by pipx, defaults to memos-cli",
-    )
-    upgrade.add_argument("--manager", choices=["auto", "pipx", "pip"], default=os.environ.get("MEMOS_CLI_UPGRADE_MANAGER", "auto"))
-    upgrade.add_argument("--python", default=sys.executable, help="Python executable used for pip upgrades")
-    upgrade.add_argument("--user", action="store_true", help="pass --user when upgrading with pip")
-    upgrade.add_argument("--dry-run", action="store_true", help="print the upgrade command without running it")
-    upgrade.set_defaults(func=cmd_upgrade)
-
-
 def cmd_config_init(args) -> dict:
     try:
         cfg, path = load_config(args.config)
@@ -672,64 +643,6 @@ def cmd_shortcut_update(args) -> Any:
     if not mask:
         raise ArgumentError("no fields to update")
     return client_from_args(args).request("PATCH", api_resource_path(shortcut["name"], "users"), params={"updateMask": ",".join(mask)}, body=shortcut)
-
-
-def cmd_api(args) -> Any:
-    data = None
-    if args.data_file:
-        raw = sys.stdin.read() if args.data_file == "-" else Path(args.data_file).read_text(encoding="utf-8")
-        data = json.loads(raw)
-    elif args.data:
-        data = maybe_json(args.data)
-    return client_from_args(args).request(args.method.upper(), args.path, params=parse_kv(args.param), body=data)
-
-
-def cmd_upgrade(args) -> dict[str, Any]:
-    manager, command = upgrade_command(args)
-    result: dict[str, Any] = {
-        "current_version": __version__,
-        "manager": manager,
-        "command": command,
-        "dry_run": args.dry_run,
-    }
-    if args.dry_run:
-        return result
-
-    completed = subprocess.run(command, text=True, capture_output=True)
-    result["returncode"] = completed.returncode
-    if completed.stdout.strip():
-        result["stdout"] = completed.stdout.strip()
-    if completed.stderr.strip():
-        result["stderr"] = completed.stderr.strip()
-    if completed.returncode != 0:
-        tail = completed.stderr.strip() or completed.stdout.strip() or "no output"
-        raise ArgumentError(f"upgrade failed with exit code {completed.returncode}: {tail}")
-    return result
-
-
-def upgrade_command(args) -> tuple[str, list[str]]:
-    manager = args.manager
-    pipx = shutil.which("pipx")
-    if manager == "auto":
-        manager = "pipx" if pipx and _running_from_pipx(args.package_name) else "pip"
-
-    if manager == "pipx":
-        if not pipx:
-            raise ArgumentError("pipx is not available; use --manager pip or install pipx")
-        if args.source == args.package_name:
-            return "pipx", [pipx, "upgrade", args.package_name]
-        return "pipx", [pipx, "install", "--force", args.source]
-
-    command = [args.python, "-m", "pip", "install", "--upgrade"]
-    if args.user:
-        command.append("--user")
-    command.append(args.source)
-    return "pip", command
-
-
-def _running_from_pipx(package_name: str) -> bool:
-    executable = Path(sys.executable).as_posix()
-    return f"/pipx/venvs/{package_name}/" in executable or f"\\pipx\\venvs\\{package_name}\\" in str(Path(sys.executable))
 
 
 def client_from_args(args) -> MemosClient:

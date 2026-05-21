@@ -6,7 +6,15 @@
 
 - Python `3.11+`
 - 推荐安装 `pipx`，用于隔离 CLI 运行环境
-- 没有 `pipx` 时，脚本会自动使用 `~/.local/share/memos-cli/venv`
+- 没有 `pipx` 时，脚本会自动使用独立 venv
+
+安装脚本默认从本仓库 GitHub 源码安装：
+
+```text
+git+https://github.com/a574676848/memos-cli.git
+```
+
+这样可以确保 Linux、macOS 和 Windows 获得同一套源码产物，避免 Windows PowerShell 误装到 PyPI 上旧版同名包。
 
 ## Linux / macOS
 
@@ -44,7 +52,7 @@ $env:MEMOS_CLI_PACKAGE_SPEC="."
 - 如果系统中没有 `memos` 命令，执行安装。
 - 如果系统中已经存在 `memos` 命令，执行升级或强制重装。
 - 默认优先使用 `pipx`。
-- 没有 `pipx` 时使用独立 venv，并把 `memos` 链接到 `~/.local/bin`。
+- 没有 `pipx` 时使用独立 venv，并把 `memos` 命令包装到本机用户 bin 目录。
 
 可用环境变量：
 
@@ -54,8 +62,8 @@ $env:MEMOS_CLI_PACKAGE_SPEC="."
 | `MEMOS_CLI_PACKAGE_NAME` | `memos-cli` | pipx 升级时使用的包名 |
 | `MEMOS_CLI_COMMAND_NAME` | `memos` | CLI 命令名 |
 | `MEMOS_CLI_INSTALL_MANAGER` | `auto` | 可选 `auto`、`pipx`、`pip`、`venv` |
-| `MEMOS_CLI_VENV_DIR` | `~/.local/share/memos-cli/venv` | venv 模式的安装目录 |
-| `MEMOS_CLI_BIN_DIR` | `~/.local/bin` | venv 模式的命令链接目录 |
+| `MEMOS_CLI_VENV_DIR` | Linux/macOS: `~/.local/share/memos-cli/venv`；Windows: `%LOCALAPPDATA%\memos-cli\venv` | venv 模式的安装目录 |
+| `MEMOS_CLI_BIN_DIR` | Linux/macOS: `~/.local/bin`；Windows: `%USERPROFILE%\.local\bin` | venv 模式的命令包装目录 |
 | `PYTHON` | `python3` 或 `python` | pip 模式使用的 Python |
 
 ## 独立升级命令
@@ -66,10 +74,20 @@ $env:MEMOS_CLI_PACKAGE_SPEC="."
 memos upgrade
 ```
 
+`memos upgrade` 默认从本仓库 GitHub 源码升级。需要改用本地目录、私有 fork 或 PyPI 包时，使用 `--source` 显式指定。
+
+只检查 GitHub 源码中的最新版本，不执行升级：
+
+```bash
+memos upgrade --check
+```
+
+版本号以安装包元数据为唯一来源。CLI 运行时通过 Python package metadata 读取当前版本；检查更新时读取 GitHub `main` 分支上的 `pyproject.toml`，比对 `[project].version`。
+
 指定来源升级：
 
 ```bash
-memos upgrade --source "git+https://github.com/a574676848/memos-cli.git"
+memos upgrade --source "."
 ```
 
 只打印将要执行的命令：

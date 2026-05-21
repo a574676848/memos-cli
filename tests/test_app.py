@@ -6,8 +6,10 @@ from contextlib import redirect_stderr, redirect_stdout
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from memos_cli.app import main
+from memos_cli.upgrade import compare_versions
 
 
 def run_cli(argv):
@@ -106,6 +108,27 @@ class AppTests(unittest.TestCase):
         self.assertEqual(payload["manager"], "pip")
         self.assertEqual(payload["command"][-2:], ["--upgrade", "."])
         self.assertTrue(payload["dry_run"])
+
+    def test_upgrade_default_source_uses_github(self):
+        code, stdout, _ = run_cli(["-j", "upgrade", "--manager", "pip", "--dry-run"])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout)
+        self.assertEqual(payload["command"][-1], "git+https://github.com/a574676848/memos-cli.git")
+
+    def test_upgrade_check_reports_available_version(self):
+        with patch("memos_cli.upgrade.fetch_latest_version", return_value="0.1.10"):
+            code, stdout, _ = run_cli(["-j", "upgrade", "--check"])
+
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout)
+        self.assertEqual(payload["latest_version"], "0.1.10")
+        self.assertTrue(payload["has_update"])
+        self.assertEqual(payload["upgrade_command"], "memos upgrade")
+
+    def test_version_compare_handles_multi_digit_segments(self):
+        self.assertGreater(compare_versions("0.1.10", "0.1.9"), 0)
+        self.assertEqual(compare_versions("0.1.3", "0.1.3"), 0)
+        self.assertLess(compare_versions("0.1.3", "0.1.4"), 0)
 
 
 if __name__ == "__main__":
