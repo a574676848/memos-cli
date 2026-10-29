@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 from typing import Any, Callable
 
 from .client import MemosClient, maybe_json, parse_kv
+from .console import read_piped_text
 
 
 ClientFactory = Callable[[argparse.Namespace], MemosClient]
@@ -25,7 +25,7 @@ def add_api(sub: argparse._SubParsersAction, client_factory: ClientFactory) -> N
 def cmd_api(args: argparse.Namespace, client_factory: ClientFactory) -> Any:
     data = None
     if args.data_file:
-        raw = sys.stdin.read() if args.data_file == "-" else Path(args.data_file).read_text(encoding="utf-8")
+        raw = read_piped_text() if args.data_file == "-" else Path(args.data_file).read_text(encoding="utf-8")
         data = json.loads(raw)
     elif args.data:
         data = maybe_json(args.data)

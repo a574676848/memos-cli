@@ -11,6 +11,7 @@ from typing import Any
 
 from .client import MemosClient, api_resource_path, normalize_resource_name
 from .config import Config, Context, active_context, load_config, safe_config_dict, save_config
+from .console import read_piped_text, relax_stdio_errors
 from .errors import APIError, ArgumentError, ConfigError, MemosCLIError
 from .raw_api import add_api
 from .render import render
@@ -19,6 +20,7 @@ from .version import get_current_version
 
 
 def main(argv: list[str] | None = None) -> int:
+    relax_stdio_errors()
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
@@ -434,7 +436,7 @@ def cmd_memo_create(args) -> Any:
     content = getattr(args, "content_flag", None) or args.content
     if args.stdin or not content:
         if not sys.stdin.isatty():
-            stdin_content = sys.stdin.read().strip()
+            stdin_content = read_piped_text().strip()
             content = "\n".join(part for part in [content, stdin_content] if part)
     if not content:
         raise ArgumentError("memo content is required")
@@ -477,7 +479,7 @@ def cmd_memo_comment(args) -> Any:
     content = args.content
     if args.stdin or not content:
         if not sys.stdin.isatty():
-            content = sys.stdin.read().strip()
+            content = read_piped_text().strip()
     if not content:
         raise ArgumentError("comment content is required")
     return client_from_args(args).request("POST", f"/api/v1/{normalize_resource_name(args.id, 'memos')}/comments", body={"content": content, "visibility": "PRIVATE"})

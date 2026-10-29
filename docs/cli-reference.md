@@ -49,6 +49,9 @@ memos memo search cloudflare
 memos edit abc123
 ```
 
+管道输入（`--stdin` 与 `api --data-file -`）按 UTF-8 优先解码，失败时回退到系统代码页，
+因此在 Windows 终端下用管道传入中文不会再触发 UnicodeEncodeError。
+
 评论、关系与反应：
 
 ```bash
