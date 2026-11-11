@@ -27,7 +27,6 @@ VERSION_PATTERN = re.compile(r"\d+|[A-Za-z]+")
 # cannot delete and rebuild that venv while this very process is still alive.
 DEFERRED_LOG_NAME = "memos-cli-upgrade.log"
 CREATE_NEW_PROCESS_GROUP = 0x00000200
-DETACHED_PROCESS = 0x00000008
 
 
 def add_upgrade(sub: argparse._SubParsersAction) -> None:
@@ -97,12 +96,23 @@ def _launch_deferred(command: list[str], result: dict[str, Any], package_name: s
     venv_root = _pipx_venv_root(package_name)
     script = _deferred_script(command, log_path, os.getpid(), venv_root)
     encoded = base64.b64encode(script.encode("utf-16-le")).decode("ascii")
+    # DETACHED_PROCESS looks right on paper but leaves Windows PowerShell 5.1
+    # unable to initialise: it exits 0 without running a single statement.
+    # A new process group is enough to outlive us and to ignore Ctrl+C.
     flags = 0
     if sys.platform == "win32":
-        flags = CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
+        flags = CREATE_NEW_PROCESS_GROUP
     try:
         subprocess.Popen(
-            [_powershell_executable(), "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
+            [
+                _powershell_executable(),
+                "-NoProfile",
+                "-NonInteractive",
+                "-WindowStyle",
+                "Hidden",
+                "-EncodedCommand",
+                encoded,
+            ],
             close_fds=True,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
