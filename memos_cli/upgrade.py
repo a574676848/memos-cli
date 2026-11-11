@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import os
 import re
 import shutil
@@ -94,12 +95,13 @@ def _needs_deferred_launch(manager: str) -> bool:
 def _launch_deferred(command: list[str], result: dict[str, Any]) -> dict[str, Any]:
     log_path = Path(tempfile.gettempdir()) / DEFERRED_LOG_NAME
     script = _deferred_script(command, log_path, os.getpid())
+    encoded = base64.b64encode(script.encode("utf-16-le")).decode("ascii")
     flags = 0
     if sys.platform == "win32":
         flags = CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
     try:
         subprocess.Popen(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            [_powershell_executable(), "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
             close_fds=True,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
@@ -118,14 +120,24 @@ def _deferred_script(command: list[str], log_path: Path, pid: int) -> str:
     invoked = " ".join(_quote_powershell(part) for part in command)
     log = _quote_powershell(str(log_path))
     return (
-        f"$p = Get-Process -Id {pid} -ErrorAction SilentlyContinue; "
-        f"if ($p) {{ $p.WaitForExit() }}; "
-        "Start-Sleep -Milliseconds 500; "
-        f"$out = & {invoked} *>&1 | Out-String; "
-        "$code = $LASTEXITCODE; "
-        f"Set-Content -LiteralPath {log} -Value $out -Encoding utf8; "
+        f"$log = {log}; "
+        "$out = ''; $code = 1; "
+        "try { "
+        f"  $p = Get-Process -Id {pid} -ErrorAction SilentlyContinue; "
+        "  if ($p) { try { $p.WaitForExit() } catch {} } "
+        "  Start-Sleep -Milliseconds 500; "
+        f"  $out = & {invoked} *>&1 | Out-String; "
+        "  $code = $LASTEXITCODE "
+        "} catch { $out = \"deferred upgrade failed: $_\"; $code = 1 } "
+        "[IO.File]::WriteAllText($log, [string]$out, [Text.UTF8Encoding]::new($false)); "
         "exit $code"
     )
+
+
+def _powershell_executable() -> str:
+    system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+    candidate = system_root / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    return str(candidate) if candidate.is_file() else "powershell"
 
 
 def _quote_powershell(value: str) -> str:
