@@ -11,7 +11,7 @@ from typing import Any
 
 from .client import MemosClient, api_resource_path, normalize_resource_name
 from .config import Config, Context, active_context, load_config, safe_config_dict, save_config
-from .console import read_piped_text, relax_stdio_errors
+from .console import configure_stdio, read_piped_text
 from .errors import APIError, ArgumentError, ConfigError, MemosCLIError
 from .raw_api import add_api
 from .render import render
@@ -20,7 +20,7 @@ from .version import get_current_version
 
 
 def main(argv: list[str] | None = None) -> int:
-    relax_stdio_errors()
+    configure_stdio()
     parser = build_parser()
     args = parser.parse_args(argv)
     try:

@@ -52,6 +52,9 @@ memos edit abc123
 管道输入（`--stdin` 与 `api --data-file -`）按 UTF-8 优先解码，失败时回退到系统代码页，
 因此在 Windows 终端下用管道传入中文不会再触发 UnicodeEncodeError。
 
+输出侧对称：被管道、文件或自动化程序消费时，`stdout` / `stderr` 强制按 UTF-8 编码，
+不再沿用 Windows 的 ANSI 代码页；交互终端保持控制台自身编码，不受影响。
+
 评论、关系与反应：
 
 ```bash

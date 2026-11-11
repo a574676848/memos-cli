@@ -7,6 +7,7 @@
 - 配置文件权限为 `0600`。
 - `memos config show` 会脱敏 token。
 - 支持 `json`、`table`、`csv`、`plain` 和文件输出。
+- 非交互输出（管道、重定向、自动化调用）统一为 UTF-8，可直接交给 `jq` 等工具解析。
 - 支持 Linux、macOS 和 Windows 安装脚本。
 
 ## 自动化建议
