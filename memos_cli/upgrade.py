@@ -70,7 +70,7 @@ def cmd_upgrade(args: argparse.Namespace) -> dict[str, Any]:
     if args.dry_run:
         return result
     if _needs_deferred_launch(manager):
-        return _launch_deferred(command, result)
+        return _launch_deferred(command, result, args.package_name)
     return run_upgrade_command(command, result)
 
 
@@ -92,9 +92,10 @@ def _needs_deferred_launch(manager: str) -> bool:
     return sys.platform == "win32" and manager == "pipx"
 
 
-def _launch_deferred(command: list[str], result: dict[str, Any]) -> dict[str, Any]:
+def _launch_deferred(command: list[str], result: dict[str, Any], package_name: str) -> dict[str, Any]:
     log_path = Path(tempfile.gettempdir()) / DEFERRED_LOG_NAME
-    script = _deferred_script(command, log_path, os.getpid())
+    venv_root = _pipx_venv_root(package_name)
+    script = _deferred_script(command, log_path, os.getpid(), venv_root)
     encoded = base64.b64encode(script.encode("utf-16-le")).decode("ascii")
     flags = 0
     if sys.platform == "win32":
@@ -116,9 +117,15 @@ def _launch_deferred(command: list[str], result: dict[str, Any]) -> dict[str, An
     return result
 
 
-def _deferred_script(command: list[str], log_path: Path, pid: int) -> str:
+def _deferred_script(command: list[str], log_path: Path, pid: int, venv_root: Path | None = None) -> str:
     invoked = " ".join(_quote_powershell(part) for part in command)
     log = _quote_powershell(str(log_path))
+    cleanup = ""
+    if venv_root is not None:
+        # pipx cannot drop a venv it did not create in the same session, so the
+        # stale directory is cleared here while nothing holds a handle on it.
+        venv = _quote_powershell(str(venv_root))
+        cleanup = f"  if (Test-Path -LiteralPath {venv}) {{ Remove-Item -LiteralPath {venv} -Recurse -Force -ErrorAction SilentlyContinue }} "
     return (
         f"$log = {log}; "
         "$out = ''; $code = 1; "
@@ -126,12 +133,19 @@ def _deferred_script(command: list[str], log_path: Path, pid: int) -> str:
         f"  $p = Get-Process -Id {pid} -ErrorAction SilentlyContinue; "
         "  if ($p) { try { $p.WaitForExit() } catch {} } "
         "  Start-Sleep -Milliseconds 500; "
+        f"{cleanup}"
         f"  $out = & {invoked} *>&1 | Out-String; "
         "  $code = $LASTEXITCODE "
         "} catch { $out = \"deferred upgrade failed: $_\"; $code = 1 } "
         "[IO.File]::WriteAllText($log, [string]$out, [Text.UTF8Encoding]::new($false)); "
         "exit $code"
     )
+
+
+def _pipx_venv_root(package_name: str) -> Path | None:
+    if not _running_from_pipx(package_name):
+        return None
+    return Path(sys.executable).resolve().parents[1]
 
 
 def _powershell_executable() -> str:
