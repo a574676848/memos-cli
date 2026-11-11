@@ -6,9 +6,11 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import tomllib
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 from .errors import ArgumentError
@@ -19,6 +21,12 @@ DEFAULT_PACKAGE_SPEC = "git+https://github.com/a574676848/memos-cli.git"
 DEFAULT_VERSION_URL = "https://raw.githubusercontent.com/a574676848/memos-cli/main/pyproject.toml"
 DEFAULT_TIMEOUT_SECONDS = 5
 VERSION_PATTERN = re.compile(r"\d+|[A-Za-z]+")
+
+# Windows keeps a lock on the interpreter of an active pipx venv, so pipx
+# cannot delete and rebuild that venv while this very process is still alive.
+DEFERRED_LOG_NAME = "memos-cli-upgrade.log"
+CREATE_NEW_PROCESS_GROUP = 0x00000200
+DETACHED_PROCESS = 0x00000008
 
 
 def add_upgrade(sub: argparse._SubParsersAction) -> None:
@@ -60,7 +68,12 @@ def cmd_upgrade(args: argparse.Namespace) -> dict[str, Any]:
     }
     if args.dry_run:
         return result
+    if _needs_deferred_launch(manager):
+        return _launch_deferred(command, result)
+    return run_upgrade_command(command, result)
 
+
+def run_upgrade_command(command: list[str], result: dict[str, Any]) -> dict[str, Any]:
     completed = subprocess.run(command, text=True, capture_output=True)
     result["returncode"] = completed.returncode
     if completed.stdout.strip():
@@ -71,6 +84,52 @@ def cmd_upgrade(args: argparse.Namespace) -> dict[str, Any]:
         tail = completed.stderr.strip() or completed.stdout.strip() or "no output"
         raise ArgumentError(f"upgrade failed with exit code {completed.returncode}: {tail}")
     return result
+
+
+def _needs_deferred_launch(manager: str) -> bool:
+    """pipx rebuilds the venv we are running from, which Windows locks down."""
+    return sys.platform == "win32" and manager == "pipx"
+
+
+def _launch_deferred(command: list[str], result: dict[str, Any]) -> dict[str, Any]:
+    log_path = Path(tempfile.gettempdir()) / DEFERRED_LOG_NAME
+    script = _deferred_script(command, log_path, os.getpid())
+    flags = 0
+    if sys.platform == "win32":
+        flags = CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
+    try:
+        subprocess.Popen(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            close_fds=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=flags,
+        )
+    except OSError as exc:
+        raise ArgumentError(f"cannot schedule deferred upgrade: {exc}") from exc
+    result["deferred"] = True
+    result["log"] = str(log_path)
+    result["hint"] = "upgrade continues after this process exits; watch the log, then rerun memos --version"
+    return result
+
+
+def _deferred_script(command: list[str], log_path: Path, pid: int) -> str:
+    invoked = " ".join(_quote_powershell(part) for part in command)
+    log = _quote_powershell(str(log_path))
+    return (
+        f"$p = Get-Process -Id {pid} -ErrorAction SilentlyContinue; "
+        f"if ($p) {{ $p.WaitForExit() }}; "
+        "Start-Sleep -Milliseconds 500; "
+        f"$out = & {invoked} *>&1 | Out-String; "
+        "$code = $LASTEXITCODE; "
+        f"Set-Content -LiteralPath {log} -Value $out -Encoding utf8; "
+        "exit $code"
+    )
+
+
+def _quote_powershell(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
 
 
 def check_upgrade(version_url: str, current_version: str | None = None) -> dict[str, Any]:

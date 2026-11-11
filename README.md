@@ -131,6 +131,9 @@ memos upgrade --source "."
 
 版本号以安装包元数据为准，CLI 运行时通过 Python package metadata 读取当前版本；`memos upgrade --check` 会读取 GitHub `main` 分支上的 `pyproject.toml`，比对其中的 `[project].version`。
 
+Windows 上通过 pipx 安装时，受管 venv 在 CLI 运行期间被系统占用，`memos upgrade` 会把实际安装排到进程退出之后执行，
+并打印日志路径（默认 `%TEMP%\memos-cli-upgrade.log`）；升级完成后重新执行 `memos --version` 核对。
+
 ## 文档
 
 - [安装与升级](docs/installation.md)

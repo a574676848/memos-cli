@@ -146,3 +146,7 @@ memos upgrade --check
 memos upgrade --source "."
 memos -j upgrade --dry-run
 ```
+
+Windows 上用 pipx 安装时，venv 里的解释器被当前进程占用，pipx 无法在运行期间重建该 venv。
+此时 `memos upgrade` 会改为把安装延迟到本进程退出后执行，输出 `deferred: true` 与日志路径
+（默认 `%TEMP%\memos-cli-upgrade.log`）；看到提示后重新执行 `memos --version` 即可确认版本。
